@@ -369,11 +369,11 @@ def procesarfactura(arch):
 						)
 					db.commit()
 			#Verificar Prefijo
-			rangos=db(db.tbl_tbl_rangos).select()
+			rangos=db(db.tbl_rangos).select()
 			nrofac=int(datos["nrofac"].strip())
 			paso=False
 			for rango in rangos:
-				if nrofac >=rango.inicio or nrofac<=rango.fin:
+				if nrofac >=rango.inicio and nrofac<=rango.fin:
 					db(db.tbl_factelectronica.id==idfactura).update(prefijo=rango.id_prefijos)
 					db.commit()
 					paso=True
@@ -397,9 +397,6 @@ def Novedades(idfactura,novedad):
 	usrs_admin=db.auth_group.role=="Administrador"
 	usrs_admin &=db.auth_membership.group_id==db.auth_group.id
 	usrs_admin=db(usrs_admin).select(db.auth_membership.user_id)
-	#for usuario in  usrs_admin:
-	#	print usuario.user_id
-	#return
 	hijo=None
 	for usuario in  usrs_admin:
 		if hijo:
@@ -415,7 +412,7 @@ def Novedades(idfactura,novedad):
 				propietario=usuario.user_id,
 				novedad=novedad,
 				vista=False)
-		db.commit()
+	db.commit()
 
 
 if __name__ == '__main__':
