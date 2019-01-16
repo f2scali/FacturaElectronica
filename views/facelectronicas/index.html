@@ -1,0 +1,5 @@
+{{extend 'layout.html'}}
+{{=formulario}}
+{{if var_desarrollo:}}
+	{{=BEAUTIFY(response._vars)}}
+{{pass}}

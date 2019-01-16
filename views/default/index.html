@@ -1,0 +1,39 @@
+{{extend 'layout_facil.html'}}
+<div name="Mensaje" id="Mensaje">
+</div>
+<div class=row>
+	<div class="card bg-light mb-3" ">
+  <div class="card-header">Estados</div>
+  <div class="card-body">
+  		{{if estados:}}
+  		{{=estados}}
+  		{{pass}}
+  </div>
+</div>
+	{{if "sucursales" in globals():}}
+	<div class="col-sm">
+		{{=sucursales}}
+	</div>
+	{{pass}}
+
+</div>
+
+<div class=row>
+	<div class="col-sm">
+
+		<div class="card bg-light mb-3" ">
+		  	<div class="card-header">Sucursal: {{=idprefijo}} Facturas en estado: {{=estado}} </div>
+		  	<div class="card-body">
+		  		Impresora: {{=impresoras}}
+				<input type="checkbox" name="checkAIU" onchange ="ajax('{{=URL('cambioaiu')}}',['checkAIU'],'Mensaje')">Activar AIU
+				{{=formulario}}
+			</div>	
+		</div>
+	</div>
+</div>
+
+{{if var_desarrollo:}}
+  {{=BEAUTIFY(response._vars)}}
+{{pass}}
+
+

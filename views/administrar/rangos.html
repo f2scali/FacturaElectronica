@@ -1,0 +1,17 @@
+{{extend 'layout_facil.html'}}
+{{=A(SPAN(_class="icon arrowleft icon-arrow-left glyphicon glyphicon-arrow-left"),' Prefijos', _class="button btn btn-default btn-secondary", _href=URL('prefijos'))}}
+<div class="card text-center">
+	<div class="card border-primary">
+		<div class="card-header">
+			<h2>Rangos de la ciudad {{=ciudad.ciudad}} - prefijo {{=ciudad.prefijo}}</h2>
+	  	</div>
+		<div class="card-body">
+			{{=formulario}}
+		</div>
+	</div>
+</div>
+
+
+{{if var_desarrollo:}}
+	{{=BEAUTIFY(response._vars)}}
+{{pass}}

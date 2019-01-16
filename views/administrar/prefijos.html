@@ -1,0 +1,6 @@
+{{extend 'layout.html'}}
+<h2>Control de Prefijos</h2>
+{{=formulario}}
+{{if var_desarrollo:}}
+{{=BEAUTIFY(response._vars)}}
+{{pass}}

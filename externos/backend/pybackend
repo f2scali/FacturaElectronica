@@ -1,0 +1,93 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import sys
+import tempfile
+import urllib2
+import os
+import ConfigParser
+
+class objCaptura():
+	"""docstring for objCaptura"""
+	def __init__(self,rutatemp=None):
+		self.error=None
+		self.rutatemp=rutatemp
+		#if rutatemp:
+			#if not os.path.isdir(rutatemp):
+			#	self.rutatemp=None
+		os.write(2,"objCaptura.Ruta Temporal:{}\n".format(self.rutatemp))
+
+
+	def Procesar(self):
+		try:
+			#Leer datos desde Argv
+			if sys.argv[3]=="(stdin)":
+				datos=sys.stdin.read()
+				if self.rutatemp:
+					arch_entrada = tempfile.NamedTemporaryFile(prefix="F2S-", delete=False,dir=self.rutatemp) 
+				else:
+					arch_entrada = tempfile.NamedTemporaryFile(prefix="F2S-", delete=False) 
+				arch_entrada.write ( datos )
+				arch_entrada.close()
+			else:
+				entrada=open(sys.argv[6],"rb").read()
+				#Creacion del archivo temporal
+				if self.rutatemp:
+					arch_entrada = tempfile.NamedTemporaryFile(prefix="F2S-", delete=False,dir=self.rutatemp) 
+				else:
+					arch_entrada = tempfile.NamedTemporaryFile(prefix="F2S-", delete=False) 
+				arch_entrada.write ( entrada )
+				arch_entrada.close()
+
+		except Exception as e:
+			self.error="Error:{}".format(e)
+			return
+		else:
+			pass
+		finally:
+			pass
+
+		#Nombre de la seccion corresponde al la Aplicacion WEb2py
+		try:
+			seccion = os.environ.get("DEVICE_URI", "") 
+			seccion = seccion.split("://")[1]
+			sys.stderr.write ( "Seccion [%s]\n" % seccion )
+		except:
+			seccion="Facil"
+
+		else:
+			pass
+		finally:
+			pass
+
+		req=urllib2.urlopen("http://localhost/%s/subirimpresion/index.html?archivo=%s" % (seccion, arch_entrada.name))
+		sys.stderr.write (req.read())
+
+
+def configuracion():
+	'''Lectura e la configuracion'''
+	salida =None
+	ruta =os.path.join('/etc/cups','facil.conf')
+	os.write(2,"configurar:{}\n".format(ruta))
+	if os.path.exists(ruta):
+		configurar=ConfigParser.ConfigParser()
+		try:
+			#os.write(2,"leer")
+			configurar.read(ruta)
+			salida=configurar.get ('pybackend','ruta')
+			os.write(2,"leer{}\n".format(salida))
+			#if not os.path.isdir(salida):
+			#	salida=None
+
+		except Exception as e:
+			os.write(2,"Error en config {}\n".format(e))
+			salida =None
+
+	os.write(2,"configuracion:{}\n".format(salida))
+	return salida
+
+if __name__=="__main__":
+	config=configuracion()
+	ob_Captura = objCaptura(rutatemp=config)
+	ob_Captura.Procesar()
+	if ob_Captura.error:
+		sys.exit(ob_Captura.error)

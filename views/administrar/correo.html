@@ -1,0 +1,15 @@
+{{extend 'layout.html'}}
+<div class="card text-center">
+	<div class="card border-primary">
+		<div class="card-header">
+			<h2>Control Servidores de Correo</h2>
+	  	</div>
+		<div class="card-body">
+			{{=formulario}}
+		</div>
+	</div>
+</div>
+
+{{if var_desarrollo:}}
+{{=BEAUTIFY(response._vars)}}
+{{pass}}
