@@ -22,83 +22,58 @@ I'''
 class ObjImap():
 	"""docstring for ObjImap"""
 	def __init__(self, ruta, servidor='imap.gmail.com', puerto=993, login='facturascali2018@gmail.com', password='Tetero.2018',bandeja="inbox",debug=False):
-		if debug:print ("ObjImap Start")
+		if debug:print ("ObjImap Start-->",ruta)
 		self.servidor=servidor
 		self.puerto=puerto
 		self.login=login
 		self.password=password
 		self.bandeja=bandeja
 		self.ruta=ruta
-		self.docXML=""
-		self.docpdf=""
+		self.docXML={}
+		self.docpdf={}
 		self.debug=debug
 
 	def Procesar(self):
 		import imaplib
 		import os
 		import email
-		mail = imaplib.IMAP4_SSL(self.servidor,self.puerto)
-		mail.login(self.login, self.password)
-		mail.list()
-		mail.select(self.bandeja) # connect to inbox.
-		result, data = mail.uid('search', None,'UNSEEN') # search and return uids instead
-		if len(data[0])==0:
-			if self.debug: print ("No hay Correos..")
-			return False
-		latest_email_uid = data[0].split()[-1]
-		if self.debug: print (latest_email_uid)
-		result, data = mail.uid('fetch', latest_email_uid, '(RFC822)')
-		if self.debug: print "result:",result
-		if result:#.upcase()=="OK":
-			for response_part in data:
-				if isinstance(response_part, tuple):
-					msg = email.message_from_string(response_part[1])
-					if msg.is_multipart():
-						if self.debug: print ("is_multipart")
-						for part in msg.walk():
-							#if part.get_content_type() in ("text/plain",   "text/html"):
-								#print "Text/Pain" "*" 
-								#print(part.get_payload(decode = True))
-							if part.get_content_type() in("text/xml"):
-								if self.debug: print ("xml")
-								payload = part.get_payload(decode=True)
-								# Default filename can be passed as an argument to get_filename()
-								filename = part.get_filename()
-								# Save the file.
-								if self.debug: print (filename)
-								if payload and filename:
-									f=open(os.path.join(self.ruta, filename), 'wb')
-									f.write(payload)
-									f.close()
-									self.docXML=filename
+		try:
+			if self.debug:print ("{}:{}".format(self.servidor,self.puerto))
+			connection = imaplib.IMAP4_SSL(self.servidor,self.puerto)
+			if self.debug:print ("{}:{}".format(self.login,self.password))
+			reporte = connection.login(self.login, self.password)
+		except Exception as e:
+			return "{}".format(e)
+		verificar=connection.select(self.bandeja) # connect to inbox.
+		if verificar[0]!="OK":
+			return "{}-{}".format(verificar[0],verificar[0])
+		result, data = connection.uid('search', None,'UNSEEN') # search and return uids instead
+		for uid in data[0].split():
+			if self.debug:print ("{}:{}".format(self.login,self.password))
 
-							elif part.get_content_type() == 'application/pdf':
-								if self.debug: print ("PDF ****")
-								# When decode=True, get_payload will return None if part.is_multipart()
-								# and the decoded content otherwise.
-								payload = part.get_payload(decode=True)
+			status,data=connection.fetch(uid,'(RFC822)')
+			body=data[0][1]
+			dbody=body.decode()
+			mail=email.message_from_string(dbody)
+			if self.debug:print ("revisar datos")
+			for registro in mail.walk():
+				archivo=registro.get_filename()
+				if self.debug:print (archivo)
+				arch_salida=None
+				if archivo:   
+					if archivo[-3:].lower()=="pdf":
+						arch_salida =os.path.join(self.ruta,archivo)
+						self.docpdf[archivo[:-4]]=arch_salida
+						
+					elif archivo[-3:].lower()=="xml":
+						arch_salida =os.path.join(self.ruta,archivo)
+						self.docXML[archivo[:-4]]=arch_salida
 
-								# Default filename can be passed as an argument to get_filename()
-								filename = part.get_filename()
-								if self.debug: print (filename)
-								# Save the file.
-								if payload and filename:
-									f=open(os.path.join(self.ruta,filename), 'wb')
-									f.write(payload)
-									f.close()
-									self.docpdf=filename
-					else:
-						if self.debug:
-							print ("no is_multipart" )
-							print(part.get_payload(decode = True))
-						pass
-		mail.logout()
-		if self.debug: 
-			print self.docXML
-			print self.docpdf
-
-		return True
-
-
-
+					if arch_salida:
+						if self.debug:print ("Ruta de salida:{}".format(arch_salida))
+						fp=open(arch_salida, 'wb')
+						fp.write(registro.get_payload(decode=True))
+						fp.close()
+		return "OK"
+		connection.close()
 

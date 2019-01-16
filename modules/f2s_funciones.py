@@ -20,15 +20,16 @@ def ExtraerQR(arch_imagen,x=779,y=20,x1=896,y1=131):
 	from datetime import datetime
 
 	arch_imagen=arch_imagen.replace("%04d","0001")
-	print arch_imagen
+	print "Archivo QR", arch_imagen
 
 	imagen=Image.open(arch_imagen)
 	area=imagen.crop((x,y,x1,y1))
-	area.show()
+	#area.show()
 	area.save("{}_crop.png".format(arch_imagen))
 	decodificado=decode (area,symbols=[ZBarSymbol.QRCODE])
 	decodificado = decodificado[0][0].split("\r\n")
 	salida={}
+	print "aqui"
 	for items in decodificado:
 		partir=items.split(":")
 		if partir[0].strip()=="NumFac":

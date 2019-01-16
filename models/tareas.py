@@ -1,4 +1,156 @@
 # -*- coding: utf-8 -*-
+def ServicioCorreo():
+	import f2s_imap
+	correo = db(db.tbl_correo.id==1).select().first()
+	envio=f2s_imap.ObjImap("/tmp",correo.servidor, 
+							correo.puerto, 
+							correo.usuario, 
+							correo.password,"Facturacion",True)
+	envio.Procesar()
+	if (envio.docXML)==0:
+		print "Vacio"
+		return "Vacio"
+	for posicion in envio.docXML:
+		print "envio:",envio.docXML, envio.docpdf
+		try:
+			ExtraerContenidos(envio.docpdf[posicion],envio.docXML[posicion])
+			#Borrar Temporales falta!!!
+
+		except Exception as e:
+			return e, envio.docXML, envio.docpdf
+
+
+def ExtraerContenidos(arch_pdf,arch_xml):
+	print "ExtraerContenidos...>"
+	import f2s_funciones
+	import os
+	if not os.path.isfile(arch_pdf):
+		return "Error no Exite PDF [{}]".format(arch_pdf)
+	if not os.path.isfile(arch_xml):
+		return "Error no Exite XML [{}]".format(arch_xml)
+	#ruta para guardar los pdf e imagenes
+	imgpng=f2s_funciones.GeneraPNG(arch_pdf)
+	datos=f2s_funciones.ExtraerQR(imgpng)
+	if not datos:
+		return "Error extracion QR [{}]".format(imgpng)
+	buscar = db(db.tbl_factelectronica.nrofac==datos["NumFac"]).select().first()
+	if buscar:
+		#Verificar
+		if buscar.estado == 'Cguno':
+			db.tbl_novedades.insert(
+				idfact=buscar.id,
+				novedad="PDF actualiza, a estado de imprimir")
+			estado='Imprimir'
+			##db.commit()
+		elif  buscar.estado == 'Electronica':
+			db.tbl_novedades.insert(
+				idfact=buscar.id,
+				novedad="No se actuliza ya fue envido el PDF")
+			#db.commit()
+			return "No se actuliza ya fue envido el PDF"
+		elif buscar.estado=='imprimir':
+			db.tbl_novedades.insert(
+				idfact=buscar.id,
+				novedad="Ya se recibieron los datos del PDF")
+			#db.commit()
+			return "Ya se recibieron los datos del PDF"
+		elif buscar.estado=='Impresa':
+			db.tbl_novedades.insert(
+				idfact=buscar.id,
+				novedad="Ya se recibieron los datos del PDF")
+			#db.commit()
+			return "No se actualiza ya fue impresa"
+		elif buscar.valfac!=datos["ValFac"]:
+			db.tbl_novedades.insert(
+				idfact=buscar.id,
+				novedad="No considen el valor subtotal   valSpool={}   ValorPDF={}".format(buscar.valfac,datos["ValFac"]))
+			#db.commit()
+			return "No considen el subtotal valor SubTotal"
+		elif buscar.valiva!=datos["ValIva"]:
+			db.tbl_novedades.insert(
+				idfact=buscar.id,
+				novedad="No considen el valor IVA   valSpool={}   ValorPDF={}".format(buscar.valIva,datos["ValIva"]))
+			#db.commit()
+			return "No considen el valor IVA"
+		elif buscar.valtot!=datos["ValFacIm"]:
+			db.tbl_novedades.insert(
+				idfact=buscar.id,
+				novedad="No considen el valor Total   valSpool={}   ValorPDF={}".format(buscar.valtot,datos["ValFacIm"]))
+			#db.commit()
+			return "No considen el valor Total"
+		elif buscar.docadq!=datos["DocAdq"]:
+			db.tbl_novedades.insert(
+				idfact=buscar.id,
+				novedad="No considen el Nit del cliente  valSpool={}   ValorPDF={}".format(buscar.docadq,datos["DocAdq"]))
+			#db.commit()
+			return "No considen el valor Total"
+
+		rutaimagenes=os.path.join(request.folder,"uploads",
+								str(buscar.created_on.year),str(buscar.created_on.month))
+		arch_qr=os.path.split(arch_pdf)[1]
+		arch_qr="{}_0001.png_crop.png".format(os.path.join("/tmp",arch_qr))
+		#datos de los archivos
+		s_pdf=open(arch_pdf,"rb")
+		s_xml=open(arch_xml,"rb")
+		s_qr=open(arch_qr,"rb")
+		#Reubicando las imagenes		
+		db.tbl_factelectronica.arch_siesa.uploadfolder=rutaimagenes
+		db.tbl_factelectronica.arch_xml.uploadfolder=rutaimagenes
+		db.tbl_factelectronica.arch_qr.uploadfolder=rutaimagenes
+		db(db.tbl_factelectronica.nrofac==buscar.nrofac).update( 
+				fecfac=datos["FecFac"],
+				nitfac=datos["NitFac"],
+				valimp=datos["ValOtroIm"],
+				cufe=datos["CUFE"],
+				rutaimgs=rutaimagenes,
+				arch_xml=db.tbl_factelectronica.arch_xml.store(s_xml,arch_xml),
+				arch_siesa=db.tbl_factelectronica.arch_siesa.store( s_pdf,archivo),
+				arch_qr=db.tbl_factelectronica.arch_qr.store(s_qr,arch_qr),
+				estado=estado)
+		##db.commit()
+	else:
+		estado='Electronica'
+		rutaimagenes=os.path.join(request.folder,"uploads",str(request.now.year),str(request.now.month))
+		#Ruta de los archivos
+		arch_qr=os.path.split(arch_pdf)[1]
+		arch_qr="{}_0001.png_crop.png".format(os.path.join("/tmp",arch_qr))
+		#datos de los archivos
+		s_pdf=open(arch_pdf,"rb")
+		s_xml=open(arch_xml,"rb")
+		s_qr=open(arch_qr,"rb")
+		#Reubicando las imagenes		
+		db.tbl_factelectronica.arch_siesa.uploadfolder=rutaimagenes
+		db.tbl_factelectronica.arch_xml.uploadfolder=rutaimagenes
+		db.tbl_factelectronica.arch_qr.uploadfolder=rutaimagenes
+		db.tbl_factelectronica.insert( 
+				nrofac=datos["NumFac"],
+				prefijo=datos["Prefijo"],
+				fecfac=datos["FecFac"],
+				nitfac=datos["NitFac"],
+				valfac=datos["ValFac"],
+				valiva=datos["ValIva"],
+				valtot=datos["ValFacIm"],
+				valimp=datos["ValOtroIm"],
+				cufe=datos["CUFE"],
+				docadq=datos["DocAdq"],
+				rutaimgs=rutaimagenes,
+				arch_xml=db.tbl_factelectronica.arch_xml.store(s_xml,arch_xml),
+				arch_siesa=db.tbl_factelectronica.arch_siesa.store( s_pdf,arch_pdf),
+				arch_qr=db.tbl_factelectronica.arch_qr.store(s_qr,arch_qr),
+				estado=estado)
+		
+		##Crear PDF
+		if estado=="Imprimir":
+			factura = db(db.tbl_factelectronica.nrofac==datos["NumFac"]).select().first()
+			detalle = db(db.tbl_detalle.idfact==factura.id).select()
+
+	db.commit()
+	return locals()
+
+
+
+
+##################3
 def procesarfactura(arch):
 	import os
 	if not os.path.isfile(arch):return "No Exite archivo [{}]".format(arch)
@@ -210,12 +362,9 @@ def procesarfactura(arch):
 				#print datos['detalle']
 				for item in datos["detalle"]:
 					db.tbl_detalle.insert(
-						idfact=idfactura,
-						item=item[0],
-						detalle=item[1],
-						detalle1=item[5],
-						cantidad=item[2],
-						unitario=item[3],
+						idfact=idfactura,	item=item[0],
+						detalle=item[1],	detalle1=item[5],
+						cantidad=item[2],	unitario=item[3],
 						valortotal=item[4],
 						)
 					db.commit()
