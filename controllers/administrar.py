@@ -97,3 +97,30 @@ def usuarios():
 	#for registro in consulta:
 
 	return(dict(formulario=formulario))
+#Activar Servicio Correo
+def VerificarSerCorreo():
+	consulta=db.scheduler_task.task_name=="Servicio Correo"
+	verificar=db(consulta).select().first()
+	if not verificar:
+		proceso=planificador.queue_task("ServicioCorreo",timeout=5000,period=60,repeats=0,
+										task_name="Servicio Correo")
+		return "Creado"
+	return "Existe"
+
+def ServicioCorreo():
+	estado=VerificarSerCorreo()
+	consulta=db.scheduler_task.task_name=="Servicio Correo"
+	campos =[db.scheduler_task.application_name,
+			db.scheduler_task.task_name,
+			db.scheduler_task.status,
+			db.scheduler_task.function_name,
+			db.scheduler_task.enabled,
+			db.scheduler_task.start_time
+			]
+
+	formulario=SQLFORM.grid(consulta,
+				fields=campos)
+
+	return locals()
+
+
