@@ -29,7 +29,6 @@ def ExtraerQR(arch_imagen,x=779,y=20,x1=896,y1=131):
 	decodificado=decode (area,symbols=[ZBarSymbol.QRCODE])
 	decodificado = decodificado[0][0].split("\r\n")
 	salida={}
-	print "aqui"
 	for items in decodificado:
 		partir=items.split(":")
 		if partir[0].strip()=="NumFac":
@@ -87,7 +86,7 @@ def SepararPrefijo_Nro(valor):
 		nrofac=None
 	else:
 		nrofac=nrofac[3:]	#ojo esto es un error del QR????
-	return perfijo,nrofac
+	return perfijo,int(nrofac)
 
 def UnirFormato(datos,formato):
 	from PyPDF2 import PdfFileWriter, PdfFileReader
@@ -107,6 +106,37 @@ def UnirFormato(datos,formato):
 		arch_e.close()
 		arch_f.close()
 		resultado=True
+	except Exception as e:
+		resultado = [e, datos, formato]
+
+	return resultado
+
+def UnirImpresion(listapdfs,formato,nombsalida):
+	if len(listapdfs)<1:
+		return None
+	from PyPDF2 import PdfFileWriter, PdfFileReader
+
+	arch_f=open(formato, "rb")
+	formato=PdfFileReader(arch_f)
+	arch_f.close()
+
+	salida = PdfFileWriter()
+
+	try:
+		for datos in listapdfs:
+			arch_e=open(datos, "rb")
+			entrada=PdfFileReader(arch_e)
+			for pagina in range(entrada.getNumPages()):
+				fondo=entrada.getPage(pagina)
+				fondo.mergePage(formato.getPage(0))
+				salida.addPage(fondo)
+			arch_e.close()
+
+		guardar=file(nombsalida,"wb")
+		salida.write(guardar)
+		guardar.close()
+		resultado=True
+
 	except Exception as e:
 		resultado = [e, datos, formato]
 
