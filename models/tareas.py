@@ -241,7 +241,7 @@ def procesarfactura(arch):
 		#######################################################
 		#Totales
 		elif cuenta==50:
-			#print datos['detalle']
+			print datos['detalle']
 			#break 
 			#print cuenta,linea
 			datos["son"]=linea.strip()
