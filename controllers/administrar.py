@@ -124,3 +124,14 @@ def ServicioCorreo():
 	return locals()
 
 
+#impresoras
+def Impresoras():
+	formulario =SQLFORM.grid(db.tbl_impresoras,
+				details=False,
+				paginate=20,
+				user_signature=True,
+				maxtextlength=40,
+				csv=False,
+				)
+	return dict(formulario=formulario)
+
