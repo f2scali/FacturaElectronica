@@ -212,25 +212,25 @@ def procesarfactura(arch):
 			linea=linea.strip()
 			if len(linea)<1:
 				cuenta +=1
+				if len(detalle)>0:
+					datos["detalle"]=[detalle]
+					detalle=[]
 				continue
 			linea=linea.replace(",","")
-			#if cuenta % 2 ==0  :#impar
-			if pibote:
+			if len(linea)>71:	#detalle con valores
+				if len(detalle)==6:
+					datos["detalle"]=[detalle]
+					detalle=[]
 				detalle.append(linea[:7].strip())
 				detalle.append(linea[7:48].strip())
 				detalle.append(float(linea[48:60].strip()))
 				detalle.append(float(linea[60:75].strip()))
 				detalle.append(float(linea[75:].strip()))
-				pibote=False
-			else:
-				pibote=True
-				detalle.append(linea[7:53].strip())
-				if datos.has_key("detalle"):
-					datos["detalle"].append(detalle)
+			else:				#Adicional Detalles		
+				if len(detalle)==6:
+					detalle[5] ="{}\n{}".format(detalle[5],linea.strip())
 				else:
-					datos["detalle"]=[detalle]
-				detalle=[]
-
+					detalle.append("{}".format(linea.strip()))
 		#######################################################
 		#Totales
 		elif cuenta==50:
