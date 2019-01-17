@@ -37,29 +37,18 @@ def ExtraerContenidos(arch_pdf,arch_xml):
 	if buscar:
 		#Verificar
 		if buscar.estado == 'Cguno':
-			db.tbl_novedades.insert(
-				idfact=buscar.id,
-				novedad="PDF actualiza, a estado de imprimir")
+			Novedades(buscar.id,"PDF actualiza, a estado de imprimir" )
 			estado='Imprimir'
-			##db.commit()
 		elif  buscar.estado == 'Electronica':
-			db.tbl_novedades.insert(
-				idfact=buscar.id,
-				novedad="No se actuliza ya fue envido el PDF")
-			#db.commit()
+			Novedades(buscar.id,"No se actuliza ya fue envido el PDF" )
 			return "No se actuliza ya fue envido el PDF"
 		elif buscar.estado=='imprimir':
-			db.tbl_novedades.insert(
-				idfact=buscar.id,
-				novedad="Ya se recibieron los datos del PDF")
-			#db.commit()
+			Novedades(buscar.id,"Ya se recibieron los datos del PDF" )
 			return "Ya se recibieron los datos del PDF"
 		elif buscar.estado=='Impresa':
-			db.tbl_novedades.insert(
-				idfact=buscar.id,
-				novedad="Ya se recibieron los datos del PDF")
-			#db.commit()
+			Novedades(buscar.id,"Ya se recibieron los datos del PDF" )
 			return "No se actualiza ya fue impresa"
+
 		elif buscar.valfac!=datos["ValFac"]:
 			db.tbl_novedades.insert(
 				idfact=buscar.id,
@@ -163,12 +152,11 @@ def procesarfactura(arch):
 	detalle=[]
 	pibote=True
 
-
-
+	debug=True
 
 	for linea in archivo.readlines():
 		#Inicio Pagina
-		print cuenta,linea
+		if debug: print cuenta,linea
 
 		if linea.find(inicio)>-1:
 			procesar=True
@@ -208,40 +196,48 @@ def procesarfactura(arch):
 		#######################################################
 		#Detalle
 		elif cuenta>=15 and cuenta <=49:
-			#print cuenta,linea
+			if debug: print cuenta,linea
 			linea=linea.strip()
 			if len(linea)<1:
 				cuenta +=1
 				if len(detalle)>0:
-					datos["detalle"]=[detalle]
+					if datos.has_key('detalle'):
+						datos["detalle"].append(detalle)
+					else:
+						datos["detalle"]=[detalle]
+
 					detalle=[]
-					print "adiciona por linea blanca"
+					if debug: print "adiciona por linea blanca"
 				continue
 			linea=linea.replace(",","")
 			if len(linea)>71:	#detalle con valores
-				print "linea con valor"
+				if debug: print "linea con valor"
 				if len(detalle)==6:
-					print "adiciona a datos el detalle"
-					datos["detalle"]=[detalle]
+					if debug: print "adiciona a datos el detalle"
+					if datos.has_key('detalle'):
+						datos["detalle"].append(detalle)
+					else:
+						datos["detalle"]=[detalle]
+
 					detalle=[]
-				print "llena detalle"
+				if debug: print "llena detalle"
 				detalle.append(linea[:7].strip())
 				detalle.append(linea[7:48].strip())
 				detalle.append(float(linea[48:60].strip()))
 				detalle.append(float(linea[60:75].strip()))
 				detalle.append(float(linea[75:].strip()))
 			else:				#Adicional Detalles		
-				print "adiciona detalle++"
+				if debug: print "adiciona detalle++"
 				if len(detalle)==6:
 					detalle[5] ="{}\n{}".format(detalle[5],linea.strip())
-					print "si exite adiciona", detalle[5]
+					if debug: print "si exite adiciona", detalle[5]
 				else:
-					print "lo crea"
+					if debug: print "lo crea"
 					detalle.append("{}".format(linea.strip()))
 		#######################################################
 		#Totales
 		elif cuenta==50:
-			print datos['detalle']
+			if debug: print ("final datos['detalle']", datos['detalle'])
 			#break 
 			#print cuenta,linea
 			datos["son"]=linea.strip()
@@ -271,40 +267,27 @@ def procesarfactura(arch):
 			###########################################
 			#Guarda pagina
 			consulta=db.tbl_factelectronica.nrofac==datos["nrofac"]
-			consulta&=db.tbl_factelectronica.prefijo==datos["ciudad"][:3]
+			#consulta&=db.tbl_factelectronica.prefijo==datos["ciudad"][:3]
 			consulta=db(consulta).select().first()
-			print "Guardar datos"
+			if debug: print "Guardar datos"
 			if consulta: #actualiza
-				idfactura=consulta.id
-				
+				if debug: print "Actualiza Factura Nro [{}]".format(datos['nrofac'])
+				idfactura=consulta.id				
 				if consulta.estado == 'Cguno':
-					db.tbl_novedades.insert(
-						idfact=idfactura,
-						novedad="Se actualizan los datos de Cguno")
+					Novedades(idfactura,"Se actualizan los datos de Cguno" )
 					estado='Cguno'
-					db.commit()
 
 				elif  consulta.estado == 'Electronica':
-					db.tbl_novedades.insert(
-						idfact=idfactura,
-						novedad="Se actualiza, a estado de imprimir")
+					Novedades(idfactura,"Se actualiza, a estado de imprimir" )
 					estado='Imprimir'
-					db.commit()
 
 				elif consulta.estado=='imprimir':
-					db.tbl_novedades.insert(
-						idfact=idfactura,
-						novedad="Ya se recibieron los datos de Cguno se actualizan")
+					Novedades(idfactura,"Ya se recibieron los datos de Cguno se actualizan" )
 					estado='Imprimir'
-					db.commit()
 
 				elif consulta.estado=='Impresa':
-					db.tbl_novedades.insert(
-						idfact=idfactura,
-						novedad="No se puede actulizar ya fue impresa")
-					db.commit()
+					Novedades(idfactura,"No se puede actualizar ya fue impresa" )
 					return "No se actualiza ya fue impresa"
-
 
 				db(db.tbl_factelectronica.id == idfactura).update(
 					docadq=datos["nit"],
@@ -323,7 +306,8 @@ def procesarfactura(arch):
 					barrio=datos["barrio"],
 					observaciones=datos["observaciones"],
 					resolucion=datos["resoluicion"],
-					ciiu=datos["ciiu"],					
+					ciiu=datos["ciiu"],
+					estado=estado				
 					)
 				db.commit()
 				#se deshabilitan los anterios detalles... No se borran !!
@@ -340,8 +324,6 @@ def procesarfactura(arch):
 						valortotal=item[4],
 						)
 					db.commit()
-
-
 			else:#crea
 				idfactura=db.tbl_factelectronica.insert(
 					nrofac=datos["nrofac"],
@@ -375,19 +357,6 @@ def procesarfactura(arch):
 						valortotal=item[4],
 						)
 					db.commit()
-			#Verificar Prefijo
-			rangos=db(db.tbl_rangos).select()
-			nrofac=int(datos["nrofac"].strip())
-			paso=False
-			for rango in rangos:
-				if nrofac >=rango.inicio and nrofac<=rango.fin:
-					db(db.tbl_factelectronica.id==idfactura).update(prefijo=rango.id_prefijos)
-					db.commit()
-					paso=True
-					break
-			if not paso:
-				Novedades(idfactura,"Nro factura {} fuera del Rango de Factacion".format(nrofac) )
-
 			#
 			#iniciar pagina
 			procesar=False
@@ -397,7 +366,6 @@ def procesarfactura(arch):
 			pibote=True
 			continue
 		cuenta +=1
-
 	return "OK"
 
 def Novedades(idfactura,novedad):
@@ -420,6 +388,24 @@ def Novedades(idfactura,novedad):
 				novedad=novedad,
 				vista=False)
 	db.commit()
+
+
+#esta es una funcion para verificar el prefijo .....
+			# #Verificar Prefijo
+			# rangos=db(db.tbl_rangos).select()
+			# nrofac=int(datos["nrofac"].strip())
+			# paso=False
+			# for rango in rangos:
+			# 	if nrofac >=rango.inicio and nrofac<=rango.fin:
+			# 		db(db.tbl_factelectronica.id==idfactura).update(prefijo=rango.id_prefijos)
+			# 		db.commit()
+			# 		paso=True
+			# 		break
+			# if not paso:
+			# 	Novedades(idfactura,"Nro factura {} fuera del Rango de Factacion".format(nrofac) )
+
+
+
 
 
 if __name__ == '__main__':

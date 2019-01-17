@@ -9,7 +9,7 @@ def F2s_VerPDF(ruta):
 
 
 
-def F2s_CrearPDF(factura,detalle):
+def F2s_CrearPDF(factura,detalle,AIU):
 	##from f2scodigo import ObjCode128
 	import f2s_cod128
 	import uuid
@@ -25,7 +25,6 @@ def F2s_CrearPDF(factura,detalle):
 	from reportlab.lib.styles import ParagraphStyle	
 	##from reportlab.lib.styles import getSampleStyleSheet
 
-	FORM_FACTURA=os.path.join(request.folder,"static","formatos",'Factura_Altas.pdf')
 	#factura
 	rutaimgs=os.path.join(request.folder,"uploads",
 								"{}".format(factura.created_on.year),
@@ -49,11 +48,11 @@ def F2s_CrearPDF(factura,detalle):
 	pdf_f2s.rotate(angulo * -1)
 
 	#encabezado
-	pdf_f2s.setFont("Ubuntu-Bold", 17)
-	posy=630
-	posx=520
+	pdf_f2s.setFont("Ubuntu-Bold", 15)
+	posy=629
+	posx=525
 	pdf_f2s.drawRightString(posx-5, posy, "{}-".format(factura.prefijo.decode('cp437').strip()) )
-	pdf_f2s.drawString(posx, posy, factura.nrofac.decode('cp437').strip() )
+	pdf_f2s.drawString(posx, posy, "{}".format(factura.nrofac) )
 	posx=30	
 	pdf_f2s.setFont("Ubuntu-Bold", 9)
 	posy=670
@@ -132,7 +131,7 @@ def F2s_CrearPDF(factura,detalle):
 	posx=30
 	pdf_f2s.setFont("Ubuntu", 7)
 	pdf_f2s.drawString(posx, posy, factura.empresa.decode('cp437').strip() )
-	pdf_f2s.drawString(posx+150, posy, factura.nrofac.decode('cp437').strip() )
+	pdf_f2s.drawString(posx+150, posy, "{}".format(factura.nrofac) )
 	pdf_f2s.drawString(posx+230, posy, factura.nitfac.decode('cp437').strip() )
 	pdf_f2s.drawString(posx+307, posy, "{:,.0f}".format(factura.valtot) )
 	pdf_f2s.drawString(posx+358, posy,factura.fecfac[8:10].strip() )
@@ -143,7 +142,7 @@ def F2s_CrearPDF(factura,detalle):
 	posy=15
 	posx=75
 	pdf_f2s.setFont("Ubuntu", 7)
-	codigo=	"(415)7709998015937(8020){:06d}{:018d}(3900){:010d}(96){}{}{}".format(int(factura.nrofac.strip()),
+	codigo=	"(415)7709998015937(8020){:06d}{:018d}(3900){:010d}(96){}{}{}".format(factura.nrofac,
 												int(factura.nitfac.strip()),
 												int(factura.valtot),
 												factura.fecfac[8:10],
@@ -178,5 +177,12 @@ def F2s_CrearPDF(factura,detalle):
 	#Fin
 	pdf_f2s.showPage()
 	pdf_f2s.save()
-	unir = f2s_funciones.UnirFormato(datos_pdf,FORM_FACTURA)
 	return datos_pdf
+
+
+def UnirPDFForm(datos_pdf):
+	import f2s_funciones  
+	import os
+	FORM_FACTURA=os.path.join(request.folder,"static","formatos",'Factura_Altas.pdf')
+	unir = f2s_funciones.UnirFormato(datos_pdf,FORM_FACTURA)
+	return True

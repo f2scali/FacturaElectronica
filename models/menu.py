@@ -23,6 +23,7 @@ if auth.has_membership("Administrador") or auth.has_membership("Super"):
         (T('Administrar'), False, '#',[
             (T('Prefijo'), False, URL('administrar', 'prefijos')),
             (T('Correo'), False, URL('administrar', 'correo')),
+            (T('Impresoras'), False, URL('administrar', 'Impresoras')),
             ])
         ]
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 db.define_table('tbl_factelectronica', 
-		Field('nrofac',unique=True, label="Nro. Factura"),
+		Field('nrofac','integer',unique=True, label="Nro. Factura"),
 		Field('prefijo'),
 		Field('fecfac'),
 		Field('nitfac'),
@@ -39,7 +39,7 @@ db.define_table('tbl_detalle',
 		Field('idfact','reference tbl_factelectronica'),
 		Field('item'),
 		Field('detalle'),
-		Field('detalle1'),
+		Field('detalle1','text'),
 		Field('cantidad','double'),
 		Field('unitario','double'),
 		Field('valortotal','double'),
@@ -73,8 +73,8 @@ db.tbl_factelectronica.arch_pdf.represent= lambda valor,registro:\
 	A("Ver imagen",_href=URL('donwload',args=valor))
 
 db.define_table("tbl_impresoras",
-	Field("nombre"),
-	Field("ruta")
+	Field("nombre",label="Descripción"),
+	Field("ruta",label="Impresora")
 	)
 
 db.define_table("tbl_correo",

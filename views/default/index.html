@@ -1,33 +1,50 @@
 {{extend 'layout_facil.html'}}
 <div name="Mensaje" id="Mensaje">
 </div>
-<div class=row>
-	<div class="card bg-light mb-3" ">
-  <div class="card-header">Estados</div>
-  <div class="card-body">
-  		{{if estados:}}
-  		{{=estados}}
-  		{{pass}}
-  </div>
-</div>
-	{{if "sucursales" in globals():}}
-	<div class="col-sm">
-		{{=sucursales}}
-	</div>
-	{{pass}}
 
-</div>
+<div class="card bg-primary  border-primary">
+	<div class="card-header  text-white"><B>Sucursal: {{=idprefijo}}</B></div>
+	<div class="card-body bg-light">
+		<div class=row>
+			<div class="col-sm-2">
+				<div class="card bg-light mb-3">
+				  <div class="card-header">Estados</div>
+				  <div class="card-body">
+				  		<ul class="list-group list-group-flush">
+					  		{{if estados:}}
+					  		<li class="list-group-item">
+					  			{{=estados}}
+					  		</li>
+					  		{{pass}}
+					  		{{if btn_aui:}}
+	    						<li class="list-group-item">{{=btn_aui}}
+	    						</li>
+					  		{{pass}}
+			  			</ul>
+				  </div>
+				</div>
+			</div>
+			<div class="col-sm">
+				<div class="card bg-light mb-3">
+					<div class="card-header">Impresión masiva</div>
+					<div class="card-body">
+						<i class="fa fa-print" aria-hidden="true"></i>
 
-<div class=row>
-	<div class="col-sm">
+			  			Impresora: {{=impresoras}}
+					</div>
+				</div>
+			</div>
+		</div>
 
-		<div class="card bg-light mb-3" ">
-		  	<div class="card-header">Sucursal: {{=idprefijo}} Facturas en estado: {{=estado}} </div>
-		  	<div class="card-body">
-		  		Impresora: {{=impresoras}}
-				<input type="checkbox" name="checkAIU" onchange ="ajax('{{=URL('cambioaiu')}}',['checkAIU'],'Mensaje')">Activar AIU
-				{{=formulario}}
-			</div>	
+		<div class=row>
+			<div class="col-sm">
+				<div class="card bg-light mb-3">
+				  	<div class="card-header">Resultado Facturas en estado: {{=estado}} </div>
+				  	<div class="card-body">
+						{{=formulario}}
+					</div>	
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
