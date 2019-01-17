@@ -215,21 +215,28 @@ def procesarfactura(arch):
 				if len(detalle)>0:
 					datos["detalle"]=[detalle]
 					detalle=[]
+					print "adiciona por linea blanca"
 				continue
 			linea=linea.replace(",","")
 			if len(linea)>71:	#detalle con valores
+				print "linea con valor"
 				if len(detalle)==6:
+					print "adiciona a datos el detalle"
 					datos["detalle"]=[detalle]
 					detalle=[]
+				print "llena detalle"
 				detalle.append(linea[:7].strip())
 				detalle.append(linea[7:48].strip())
 				detalle.append(float(linea[48:60].strip()))
 				detalle.append(float(linea[60:75].strip()))
 				detalle.append(float(linea[75:].strip()))
 			else:				#Adicional Detalles		
+				print "adiciona detalle++"
 				if len(detalle)==6:
 					detalle[5] ="{}\n{}".format(detalle[5],linea.strip())
+					print "si exite adiciona", detalle[5]
 				else:
+					print "lo crea"
 					detalle.append("{}".format(linea.strip()))
 		#######################################################
 		#Totales
