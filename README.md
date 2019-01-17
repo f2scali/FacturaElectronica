@@ -8,3 +8,5 @@ Factura Electronica Colombia
 
 ./web2py.py  -K devFacturacion &
 ./web2py.py  -K Facturacion &
+
+pip install sh
